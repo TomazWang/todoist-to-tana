@@ -16,7 +16,7 @@
         "start:full": "npm run build && npm start",
         "build": "npm run clean:some && tsc -p .",
         "clean:some": "rm -rf ./lib",
-        "install:ttt": "npm install -g"
+        "install:ttt": "npm install && npm run build && npm install -g"
     },
     "license": "ISC",
     "devDependencies": {
