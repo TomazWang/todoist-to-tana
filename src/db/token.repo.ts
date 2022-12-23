@@ -1,7 +1,7 @@
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb';
+import fs from 'fs';
+import { homedir } from 'os';
 
 type Data = {
     todoistToken?: string;
@@ -12,10 +12,15 @@ let db: Low<Data>;
 
 async function initDb() {
     // File path
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const file = join(__dirname, 'db.ttt');
 
-    const adapter = new JSONFile<Data>(file);
+    const userHomeDir = homedir();
+    const dbDir = userHomeDir + '/.ttt';
+    const filePath = dbDir + 'db.ttt';
+    if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir);
+    }
+
+    const adapter = new JSONFile<Data>(filePath);
     db = new Low(adapter);
 
     await db.read();
@@ -23,7 +28,6 @@ async function initDb() {
     db.data ||= {};
     await db.write();
 }
-
 
 async function setTodoistToken(token: string) {
     console.log('> set token');
@@ -42,12 +46,10 @@ async function setTodoistToken(token: string) {
     }
 }
 
-async function getTodoistToken(): Promise<string|undefined> {
-    await db.read()
+async function getTodoistToken(): Promise<string | undefined> {
+    await db.read();
     return db.data?.todoistToken;
 }
-
-
 
 async function setTanaToken(token: string) {
     console.log('> set token');
@@ -66,8 +68,8 @@ async function setTanaToken(token: string) {
     }
 }
 
-async function getTanaToken(): Promise<string|undefined> {
-    await db.read()
+async function getTanaToken(): Promise<string | undefined> {
+    await db.read();
     return db.data?.tanaToken;
 }
 
@@ -76,5 +78,5 @@ export const tokenRepo = {
     getTodoistToken,
     setTodoistToken,
     getTanaToken,
-    setTanaToken
-}
+    setTanaToken,
+};

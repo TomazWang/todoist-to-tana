@@ -37,12 +37,14 @@ const app = new Command();
 
 app.version('0.1.0');
 
-
 app.command('config')
     .option('--todoist-token <token>')
     .option('--tana-token <token>')
+    .option('-D', 'debug mode')
     .action(async (tokens) => {
-        console.log(JSON.stringify(tokens));
+        if (tokens.D) {
+            console.log(JSON.stringify(tokens));
+        }
         if (tokens.todoistToken) {
             await tokenRepo.setTodoistToken(tokens.todoistToken);
         }
@@ -63,12 +65,16 @@ app.command('config')
 app.command('pull')
     .option('--filter <todoist filter>', 'todoist filter query. default to "today | overdue"', 'today | overdue')
     .option('--tana-token <api token>', 'token to tana node')
+    .option('-D', 'debug mode')
     .action(async (options) => {
         let tnt: string;
-        if (!!!options.tanaToken) {
+
+        if (!options.tanaToken) {
             const tntInDb = await tokenRepo.getTanaToken();
             if (!tntInDb) {
                 throw new Error('Please set tana token by --tana-token');
+            } else {
+                tnt = tntInDb;
             }
         }
 
@@ -76,11 +82,15 @@ app.command('pull')
 
         const tasks = await getTasks(filter);
         const calls = tasks
-            .map((task) => encodeURIComponent(`${task.content} (${task.url})`))
+            .map((task) => `${task.content} (${task.url})`)
             .map((note) => {
-                console.log(note);
+                if (options.D) {
+                    console.log(`tana token: ${tnt}`);
+                    console.log(`note: ${note}`);
+                }
+                const encodedNote = encodeURIComponent(note);
                 return request
-                    .get(`https://europe-west1-tagr-prod.cloudfunctions.net/addToNode?note=${note}`)
+                    .get(`https://europe-west1-tagr-prod.cloudfunctions.net/addToNode?note=${encodedNote}`)
                     .set({ Authorization: `Bearer ${tnt}`, Accept: 'application/json' });
             });
 
